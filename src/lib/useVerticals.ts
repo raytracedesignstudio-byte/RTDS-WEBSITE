@@ -9,16 +9,18 @@ function getApiBases(): string[] {
     ? normalizeApiBase(String(import.meta.env.VITE_API_URL))
     : null;
 
-  const bases = [
-    envBase,
-    "/api",
+  if (envBase) {
+    return [envBase];
+  }
+
+  if (
     typeof window !== "undefined" &&
     ["localhost", "127.0.0.1"].includes(window.location.hostname)
-      ? "http://localhost:4000/api"
-      : null,
-  ].filter((value): value is string => Boolean(value));
+  ) {
+    return ["/api", "http://localhost:4000/api"];
+  }
 
-  return [...new Set(bases)];
+  return ["/api"];
 }
 
 async function fetchPublicVerticals(): Promise<any[]> {
@@ -127,3 +129,4 @@ export function invalidateVerticalsCache() {
   cachedVerticals = null;
   cacheError = null;
 }
+

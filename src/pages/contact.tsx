@@ -6,6 +6,14 @@ import { Linkedin, Phone } from "lucide-react";
 import { useSiteSettings } from "@/lib/useSiteSettings";
 
 function getApiUrl(path: string) {
+  const envBase = import.meta.env.VITE_API_URL
+    ? String(import.meta.env.VITE_API_URL).replace(/\/+$/, "")
+    : "";
+
+  if (envBase) {
+    return `${envBase}${path}`;
+  }
+
   const base = import.meta.env.BASE_URL.replace(/\/$/, "");
   return `${base}/api${path}`;
 }
@@ -332,3 +340,4 @@ export default function Contact() {
     </PageTransition>
   );
 }
+
