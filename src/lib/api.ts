@@ -1,4 +1,27 @@
+import imageCompression from "browser-image-compression";
+
 const API_BASE = import.meta.env.VITE_API_URL || "/api";
+const CLOUDINARY_MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+
+async function getUploadFile(file: File): Promise<File> {
+  if (!file.type.startsWith("image/")) {
+    return file;
+  }
+
+  const compressed = await imageCompression(file, {
+    maxSizeMB: 5,
+    maxWidthOrHeight: 1920,
+    useWebWorker: true,
+  });
+
+  if (compressed.size > CLOUDINARY_MAX_FILE_SIZE_BYTES) {
+    throw new Error(
+      "Image is still too large after compression. Please choose a smaller image.",
+    );
+  }
+
+  return compressed;
+}
 
 function getHeaders(auth?: string): HeadersInit {
   const headers: HeadersInit = { "Content-Type": "application/json" };
@@ -49,20 +72,22 @@ export async function apiDelete(path: string, token?: string): Promise<void> {
 }
 
 export async function uploadImage(file: File, token: string): Promise<string> {
+  const fileToUpload = await getUploadFile(file);
+
   const urlRes = await fetch(`${API_BASE}/storage/uploads/request-url`, {
     method: "POST",
     headers: getHeaders(token),
     body: JSON.stringify({
-      name: file.name,
-      size: file.size,
-      contentType: file.type,
+      name: fileToUpload.name,
+      size: fileToUpload.size,
+      contentType: fileToUpload.type,
     }),
   });
   if (!urlRes.ok) throw new Error("Failed to get upload URL");
   const { uploadURL, uploadParams } = await urlRes.json();
 
   const formData = new FormData();
-  formData.append("file", file);
+  formData.append("file", fileToUpload);
   for (const [key, value] of Object.entries(
     uploadParams as Record<string, string>,
   )) {
