@@ -6,6 +6,7 @@ interface Props {
 }
 
 const EASE_OUT = [0.16, 1, 0.3, 1] as const;
+const INTRO_DURATION_MS = 7600;
 
 export default function LogoIntro({ onAnimationComplete }: Props) {
   const [cursorGlow, setCursorGlow] = useState({
@@ -17,7 +18,7 @@ export default function LogoIntro({ onAnimationComplete }: Props) {
   useEffect(() => {
     const completeTimer = setTimeout(() => {
       onAnimationComplete?.();
-    }, 10500);
+    }, INTRO_DURATION_MS);
     return () => {
       clearTimeout(completeTimer);
     };
@@ -62,7 +63,7 @@ export default function LogoIntro({ onAnimationComplete }: Props) {
           opacity: 0.1,
           filter: "brightness(0.74) saturate(0.78)",
         }}
-        transition={{ duration: 8.6, ease: "easeOut" }}
+        transition={{ duration: 6.4, ease: "easeOut" }}
       >
         <ArchitectureAnimation />
       </motion.div>
@@ -105,9 +106,9 @@ export default function LogoIntro({ onAnimationComplete }: Props) {
           initial={{ left: "-80%", opacity: 0 }}
           animate={{ left: ["-80%", "180%"], opacity: [0, 1, 1, 0] }}
           transition={{
-            duration: 1.5,
+            duration: 1.1,
             ease: [0.25, 1, 0.5, 1],
-            delay: 9,
+            delay: 6.2,
             times: [0, 0.05, 0.9, 1],
           }}
           style={{
@@ -158,7 +159,7 @@ export default function LogoIntro({ onAnimationComplete }: Props) {
         <motion.div
           initial={{ opacity: 0, x: -40 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 1.4, ease: EASE_OUT, delay: 1.8 }}
+          transition={{ duration: 1, ease: EASE_OUT, delay: 1.2 }}
         >
           <motion.div
             animate={{ scale: [1, 1.006, 1, 1.006, 1] }}
@@ -206,7 +207,7 @@ export default function LogoIntro({ onAnimationComplete }: Props) {
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.4, ease: EASE_OUT, delay: 1.8 }}
+          transition={{ duration: 1, ease: EASE_OUT, delay: 1.2 }}
         >
           <img
             src="/logo-text.png"
@@ -226,7 +227,7 @@ export default function LogoIntro({ onAnimationComplete }: Props) {
         className="absolute bottom-8 left-1/2 -translate-x-1/2"
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 10.5, duration: 0.8 }}
+        transition={{ delay: 7.1, duration: 0.6 }}
       >
         <motion.div
           animate={{ y: [0, 8, 0] }}

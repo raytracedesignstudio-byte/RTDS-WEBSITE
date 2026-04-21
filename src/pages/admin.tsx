@@ -220,6 +220,7 @@ function ProjectsManager() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Project | null>(null);
   const [creating, setCreating] = useState(false);
+  const [reordering, setReordering] = useState(false);
 
   const fetchProjects = useCallback(async () => {
     setLoading(true);
@@ -235,6 +236,48 @@ function ProjectsManager() {
   useEffect(() => {
     fetchProjects();
   }, [fetchProjects]);
+
+  const orderedProjects = [...projects].sort(
+    (a, b) => a.sortOrder - b.sortOrder,
+  );
+
+  async function moveProject(projectId: number, direction: -1 | 1) {
+    if (reordering) return;
+
+    const currentIndex = orderedProjects.findIndex((p) => p.id === projectId);
+    const nextIndex = currentIndex + direction;
+    if (
+      currentIndex < 0 ||
+      nextIndex < 0 ||
+      nextIndex >= orderedProjects.length
+    ) {
+      return;
+    }
+
+    const current = orderedProjects[currentIndex];
+    const target = orderedProjects[nextIndex];
+
+    setReordering(true);
+    try {
+      await Promise.all([
+        apiPut(
+          `/admin/projects/${current.id}`,
+          { sortOrder: target.sortOrder },
+          getAdminToken(),
+        ),
+        apiPut(
+          `/admin/projects/${target.id}`,
+          { sortOrder: current.sortOrder },
+          getAdminToken(),
+        ),
+      ]);
+      await fetchProjects();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setReordering(false);
+    }
+  }
 
   if (loading) return <div className="text-white/40">Loading projects...</div>;
 
@@ -276,7 +319,7 @@ function ProjectsManager() {
       </div>
 
       <div className="space-y-3">
-        {projects.map((project) => (
+        {orderedProjects.map((project, index) => (
           <div
             key={project.id}
             className="flex items-center gap-4 p-4 bg-white/5 rounded border border-white/10 hover:border-white/20 transition-colors"
@@ -303,6 +346,22 @@ function ProjectsManager() {
               </span>
             </div>
             <div className="flex items-center gap-1">
+              <button
+                onClick={() => moveProject(project.id, -1)}
+                disabled={index === 0 || reordering}
+                className="px-2 py-1.5 text-xs bg-white/10 hover:bg-white/20 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                title="Move up"
+              >
+                ↑
+              </button>
+              <button
+                onClick={() => moveProject(project.id, 1)}
+                disabled={index === orderedProjects.length - 1 || reordering}
+                className="px-2 py-1.5 text-xs bg-white/10 hover:bg-white/20 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                title="Move down"
+              >
+                ↓
+              </button>
               <button
                 onClick={() => setEditing(project)}
                 className="px-3 py-1.5 text-xs bg-white/10 hover:bg-white/20 rounded transition-colors"

@@ -38,7 +38,9 @@ function Router({
 }) {
   const [location] = useLocation();
   const { verticals, loading } = useVerticals();
-  const matchedVertical = verticals.find((vertical) => vertical.path === location);
+  const matchedVertical = verticals.find(
+    (vertical) => vertical.path === location,
+  );
   const isKnownStaticRoute =
     location === "/" ||
     location === "/about" ||
@@ -80,7 +82,22 @@ function AppShell() {
 
   const handleLogoAnimationComplete = useCallback(() => {
     setShowNav(true);
-  }, []);
+
+    if (location !== "/") return;
+
+    const scrollHintOffset = Math.min(
+      120,
+      Math.max(70, Math.round(window.innerHeight * 0.12)),
+    );
+
+    window.setTimeout(() => {
+      window.scrollTo({
+        top: scrollHintOffset,
+        left: 0,
+        behavior: "smooth",
+      });
+    }, 260);
+  }, [location]);
 
   useEffect(() => {
     if (location !== "/") {
