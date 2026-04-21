@@ -3,7 +3,14 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AnimatePresence } from "framer-motion";
-import { lazy, Suspense, useCallback, useEffect, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useState,
+} from "react";
 
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -25,9 +32,21 @@ const queryClient = new QueryClient();
 
 function ScrollToTop() {
   const [location] = useLocation();
-  useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
   }, [location]);
+
+  useEffect(() => {
+    if (!("scrollRestoration" in window.history)) return;
+    const previous = window.history.scrollRestoration;
+    window.history.scrollRestoration = "manual";
+    return () => {
+      window.history.scrollRestoration = previous;
+    };
+  }, []);
+
   return null;
 }
 
@@ -86,8 +105,8 @@ function AppShell() {
     if (location !== "/") return;
 
     const scrollHintOffset = Math.min(
-      120,
-      Math.max(70, Math.round(window.innerHeight * 0.12)),
+      170,
+      Math.max(100, Math.round(window.innerHeight * 0.18)),
     );
 
     window.setTimeout(() => {
