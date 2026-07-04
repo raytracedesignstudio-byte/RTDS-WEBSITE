@@ -79,7 +79,7 @@ export default function Admin() {
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
   const [tab, setTab] = useState<
-    "projects" | "vacancies" | "media" | "featured" | "verticals"
+    "projects" | "vacancies" | "media" | "featured" | "verticals" | "partners"
   >("projects");
 
   useEffect(() => {
@@ -188,6 +188,7 @@ export default function Admin() {
                 ["projects", "Projects"],
                 ["featured", "Featured"],
                 ["verticals", "Verticals"],
+                ["partners", "Partners"],
                 ["media", "Media & Team"],
                 ["vacancies", "Vacancies"],
               ] as const
@@ -209,6 +210,7 @@ export default function Admin() {
           {tab === "vacancies" && <VacanciesManager />}
           {tab === "media" && <MediaManager />}
           {tab === "featured" && <FeaturedManager />}
+          {tab === "partners" && <PartnersManager />}
         </main>
       </div>
     </div>
@@ -1951,6 +1953,160 @@ function SiteProfileEditor() {
           className="px-6 py-2.5 bg-primary text-white text-sm tracking-wide hover:bg-primary/80 transition-colors disabled:opacity-50"
         >
           {saving ? "Saving..." : "Save Site Profile"}
+        </button>
+        {saved && (
+          <span className="text-green-400 text-sm self-center">Saved!</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PartnersManager() {
+  type Partner = { name: string; logo: string };
+  const [partners, setPartners] = useState<Partner[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [uploading, setUploading] = useState<number | null>(null);
+
+  useEffect(() => {
+    apiGet<any[]>("/admin/partners", getAdminToken())
+      .then((data) =>
+        setPartners(
+          data.map((p) => ({ name: p.name, logo: p.logo || "" })),
+        ),
+      )
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  function updatePartner(i: number, field: keyof Partner, val: string) {
+    setPartners((prev) =>
+      prev.map((p, idx) => (idx === i ? { ...p, [field]: val } : p)),
+    );
+    setSaved(false);
+  }
+
+  async function handleLogoUpload(
+    i: number,
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(i);
+    try {
+      const url = await uploadImage(file, getAdminToken());
+      updatePartner(i, "logo", url);
+    } catch {}
+    setUploading(null);
+  }
+
+  function addPartner() {
+    setPartners((prev) => [...prev, { name: "", logo: "" }]);
+    setSaved(false);
+  }
+
+  function removePartner(i: number) {
+    setPartners((prev) => prev.filter((_, idx) => idx !== i));
+    setSaved(false);
+  }
+
+  async function handleSave() {
+    if (partners.some((p) => !p.name.trim())) {
+      alert("Every partner needs a name.");
+      return;
+    }
+    setSaving(true);
+    try {
+      await apiPut(
+        "/admin/partners",
+        { partners: partners.map((p) => ({ name: p.name.trim(), logo: p.logo })) },
+        getAdminToken(),
+      );
+      invalidateSiteSettings();
+      setSaved(true);
+    } catch {}
+    setSaving(false);
+  }
+
+  if (loading) return <div className="text-white/40">Loading partners...</div>;
+
+  return (
+    <div>
+      <div className="mb-6">
+        <h2 className="text-xl font-serif">Partners ({partners.length})</h2>
+        <p className="text-white/40 text-sm mt-1">
+          Manage the partner logos shown in the "Our Partners" section on the
+          homepage. Upload a logo (transparent PNG works best) or leave it empty
+          to show the name as text.
+        </p>
+      </div>
+
+      <div className="space-y-3 max-w-3xl">
+        {partners.map((partner, i) => (
+          <div
+            key={i}
+            className="flex items-center gap-4 p-4 bg-white/5 rounded border border-white/10"
+          >
+            <div className="relative w-20 h-14 rounded overflow-hidden shrink-0 group bg-white/5 flex items-center justify-center">
+              {partner.logo ? (
+                <img
+                  src={partner.logo}
+                  alt={partner.name}
+                  className="w-full h-full object-contain p-1"
+                />
+              ) : (
+                <span className="text-[10px] text-white/30">No logo</span>
+              )}
+              <label className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                <span className="text-[10px] text-white">
+                  {uploading === i ? "..." : "Upload"}
+                </span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleLogoUpload(i, e)}
+                  className="hidden"
+                  disabled={uploading === i}
+                />
+              </label>
+            </div>
+            <div className="flex-1">
+              <input
+                value={partner.name}
+                onChange={(e) => updatePartner(i, "name", e.target.value)}
+                placeholder="Partner name"
+                className="w-full px-3 py-2 bg-white/5 border border-white/10 text-sm text-white focus:border-primary outline-none"
+              />
+            </div>
+            <button
+              onClick={() => removePartner(i)}
+              className="text-red-400/60 hover:text-red-400 text-lg"
+              title="Remove partner"
+            >
+              ×
+            </button>
+          </div>
+        ))}
+        {partners.length === 0 && (
+          <p className="text-white/30 text-sm">No partners yet.</p>
+        )}
+      </div>
+
+      <div className="flex gap-3 mt-6">
+        <button
+          onClick={addPartner}
+          className="px-4 py-2 bg-white/10 text-white/70 text-sm hover:bg-white/20 transition-colors rounded"
+        >
+          + Add Partner
+        </button>
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="px-6 py-2.5 bg-primary text-white text-sm tracking-wide hover:bg-primary/80 transition-colors disabled:opacity-50"
+        >
+          {saving ? "Saving..." : "Save Partners"}
         </button>
         {saved && (
           <span className="text-green-400 text-sm self-center">Saved!</span>

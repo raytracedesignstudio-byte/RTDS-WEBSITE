@@ -25,6 +25,8 @@ function getApiBases(): string[] {
 
 export type TeamMember = { name: string; role: string; image: string };
 
+export type Partner = { name: string; logo: string };
+
 export type SiteProfile = {
   contactEmail: string;
   contactPhone: string;
@@ -40,6 +42,7 @@ export type SiteProfile = {
 
 type SiteSettings = {
   team: TeamMember[];
+  partners: Partner[];
   verticalCovers: Record<string, string>;
   featuredSlugs: string[];
   profile: SiteProfile | null;
@@ -64,6 +67,7 @@ function isCacheFresh() {
 function getEmptySettings(): SiteSettings {
   return {
     team: [],
+    partners: [],
     verticalCovers: {},
     featuredSlugs: [],
     profile: null,
@@ -103,6 +107,7 @@ async function fetchSettings(): Promise<SiteSettings> {
 
   const resolved: SiteSettings = {
     team: Array.isArray(data.team) ? data.team : [],
+    partners: Array.isArray(data.partners) ? data.partners : [],
     verticalCovers:
       data.verticalCovers && typeof data.verticalCovers === "object"
         ? data.verticalCovers
