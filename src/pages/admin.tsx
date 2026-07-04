@@ -501,6 +501,7 @@ function ProjectForm({
   }
 
   async function handleSave() {
+    if (saving) return;
     if (
       !slug ||
       !title ||
